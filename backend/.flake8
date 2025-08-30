@@ -1,0 +1,15 @@
+[flake8]
+# Allow long lines (no max line length check)
+max-line-length = 120
+
+# Ignore rules that complain about unused imports/variables & line length
+ignore =
+    F401,
+    F841,
+    E302,
+    E501,
+    W292,
+    W293
+
+# Only check whitespace, indentation, and line break rules (E, W)
+select = E, W
