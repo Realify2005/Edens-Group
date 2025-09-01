@@ -18,7 +18,7 @@ function App() {
 
   return (
     <>
-      <header style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+      <header className="flex items-center gap-4">
         <SignedOut>
           <SignInButton mode="modal" />
           <SignUpButton mode="modal" />
@@ -26,7 +26,7 @@ function App() {
 
         <SignedIn>
           <UserButton />
-          <span style={{ marginLeft: "0.5rem" }}>✅ Signed in</span>
+          <span className="ml-2">✅ Signed in</span>
         </SignedIn>
       </header>
 
