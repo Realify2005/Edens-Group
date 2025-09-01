@@ -92,7 +92,6 @@ frontend/build/
 *.pkl
 *.joblib
 embeddings/
-models/
 .wandb/
 
 # Documentation builds
