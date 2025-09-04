@@ -1,9 +1,13 @@
 import os
 from functools import lru_cache
 from typing import Optional
+from pathlib import Path
 from pydantic import BaseModel, Field, validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# point to backend/.env no matter where you run python from
+BASE_DIR = Path(__file__).resolve().parent     # this = backend/
+ENV_PATH = BASE_DIR / ".env"
 
 class Settings(BaseSettings):
     """
@@ -17,8 +21,11 @@ class Settings(BaseSettings):
     """
     
     # Tell Pydantic to read from .env file automatically
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
-    
+    model_config = SettingsConfigDict(
+        env_file=str(ENV_PATH),
+        env_file_encoding="utf-8"
+    )
+
     # Application settings - basic app info
     app_name: str = "Mental Health Services Chatbot API"  # App display name
     debug: bool = False  # Enable debug mode (more detailed errors)
@@ -26,12 +33,13 @@ class Settings(BaseSettings):
     
     # Database connection - REQUIRED, no default for security
     # Example: "postgresql://username:password@localhost:5432/database_name"
-    database_url: str = Field(..., description="Database connection URL")
-    
+    local_postgresql_database_url: str = Field(..., description="Local PostgreSQL database URL")
+    heroku_postgresql_database_url: str = Field(..., description="Heroku PostgreSQL database URL")
+
     # Security settings - for JWT token creation
     # The "..." means this field is REQUIRED - app won't start without it
-    secret_key: str = Field(..., min_length=32, description="Secret key for JWT tokens")
-    algorithm: str = "HS256"  # Encryption algorithm for JWT tokens
+    # secret_key: str = Field(..., min_length=32, description="Secret key for JWT tokens")
+    # algorithm: str = "HS256"  # Encryption algorithm for JWT tokens
     access_token_expire_minutes: int = 30  # How long login tokens last
     
     # CORS (Cross-Origin Resource Sharing) - which websites can call your API
@@ -39,47 +47,15 @@ class Settings(BaseSettings):
     cors_origins: list[str] = Field(default=["http://localhost:3000"], description="Allowed CORS origins")
     
     # AI/LangGraph settings - REQUIRED for chatbot functionality
-    openai_api_key: str = Field(..., description="OpenAI API key")  # Required for AI responses
-    langsmith_api_key: Optional[str] = Field(default=None, description="LangSmith API key for tracing")  # Optional monitoring
+    # openai_api_key: str = Field(..., description="OpenAI API key")  # Required for AI responses
+    # langsmith_api_key: Optional[str] = Field(default=None, description="LangSmith API key for tracing")  # Optional monitoring
     
     # External service APIs - Optional third-party integrations
-    google_maps_api_key: Optional[str] = Field(default=None, description="Google Maps API key")  # For location services
+    geocode_provider: str = Field(default="mapbox", description="Geocode provider, e.g., mapbox")  # Which geocode service to use
+    geocode_api_key: str = Field(..., description="Geocode API key")  # Required for geocoding
     
     # Logging configuration
-    log_level: str = Field(default="INFO", description="Log level")  # How detailed should logs be
-    
-    # VALIDATION FUNCTIONS - These run when the app starts to check your settings
-    
-    @validator("secret_key")
-    def validate_secret_key(cls, v):
-        """
-        Ensures the secret key is secure.
-        Prevents common weak keys that would make your app vulnerable.
-        """
-        if v in ["your-secret-key-here", "change-me", ""] or len(v) < 32:
-            raise ValueError("Secret key must be at least 32 characters and not use default values")
-        return v
-    
-    @validator("environment")
-    def validate_environment(cls, v):
-        """
-        Ensures environment is one of the allowed values.
-        This helps prevent typos in deployment settings.
-        """
-        allowed = ["development", "staging", "production"]
-        if v not in allowed:
-            raise ValueError(f"Environment must be one of: {allowed}")
-        return v
-    
-    @validator("database_url")
-    def validate_database_url(cls, v):
-        """
-        Prevents using placeholder database URLs in production.
-        Forces you to provide real database connection details.
-        """
-        if "user:password@localhost" in v or "change-me" in v:
-            raise ValueError("Database URL must not contain placeholder values")
-        return v
+    # log_level: str = Field(default="INFO", description="Log level")  # How detailed should logs be
 
 
 @lru_cache()
